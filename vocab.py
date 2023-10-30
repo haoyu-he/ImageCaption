@@ -22,6 +22,7 @@ class Vocab:
             2: '<eos>',
             3: '<unk>'
         }
+        self.pad, self.sos, self.eos, self.unk = '<pad>', '<sos>', '<eos>', '<unk>'
         self.size = 4
 
     def add_sentence(self, sentence: str):
