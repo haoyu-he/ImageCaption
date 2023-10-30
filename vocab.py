@@ -70,3 +70,8 @@ class Vocab:
             self.word2index[word] = self.size
             self.index2word[self.size] = word
             self.size += 1
+
+    def get_index(self, word: str) -> int:
+        if word not in self.word2idx:
+            return self.word2idx['unk']
+        return self.word2idx[word]

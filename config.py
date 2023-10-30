@@ -9,7 +9,7 @@ class Config:
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # encoder
-    img_emb_dim = 512
+    image_emb_dim = 512
     # decoder
     word_emb_dim = 512
     hidden_dim = 1024
