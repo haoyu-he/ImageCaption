@@ -20,4 +20,3 @@ dataset = Flicker30k(config.dataset_dir, config.caption_file, vocab, preprocess_
 train_size = int(config.train_size * len(dataset))
 val_size = len(dataset) - train_size
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-pass
