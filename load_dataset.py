@@ -1,5 +1,4 @@
 import os
-import nltk
 
 import torch
 from torch.utils.data import DataLoader
@@ -42,11 +41,10 @@ class Flicker30k:
 
                 instance = line.strip().lower().split(",", 1)
                 image_id = instance[0]
-                caption = instance[1]
+                caption = vocab.sos + instance[1] + vocab.eos
 
                 # split words
-                words = nltk.word_tokenize(caption)
-                words = [vocab.sos] + words + [vocab.eos]
+                words = vocab.word_tokenize(caption)
 
                 word_ids = [vocab.get_index(word) for word in words]
 
