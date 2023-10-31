@@ -1,8 +1,9 @@
 import os
 import string
-import nltk
-
+from nltk.tokenize import RegexpTokenizer
 from collections import Counter
+
+from config import Config
 
 
 class Vocab:
@@ -25,9 +26,11 @@ class Vocab:
         self.pad, self.sos, self.eos, self.unk = '<pad>', '<sos>', '<eos>', '<unk>'
         self.size = 4
 
+        self.word_tokenize = RegexpTokenizer(r'(?:[a-zA-Z]+|<[a-zA-Z]+>)').tokenize
+
     def add_sentence(self, sentence: str):
 
-        tokens = nltk.tokenize.word_tokenize(sentence)
+        tokens = self.word_tokenize(sentence)
         self.counter.update(tokens)
 
     def init_vocab(self):
@@ -73,6 +76,31 @@ class Vocab:
             self.size += 1
 
     def get_index(self, word: str) -> int:
-        if word not in self.word2idx:
-            return self.word2idx['<unk>']
-        return self.word2idx[word]
+        if word not in self.word2index:
+            return self.word2index['<unk>']
+        return self.word2index[word]
+
+    def save_vocab(self, vocab_file: str):
+
+        with open(vocab_file, 'a') as file:
+            for word in self.word2index.keys():
+                line = f'{word},{self.word2index[word]}\n'
+                file.write(line)
+
+    def load_vocab(self, vocab_file: str):
+
+        self.init_vocab()
+
+        with open(vocab_file, 'r') as file:
+            for line in file:
+                word, index = line.split(',')
+                self.word2index[word] = int(index)
+                self.index2word[int(index)] = word
+
+
+if __name__ == '__main__':
+    config = Config
+
+    vocab = Vocab()
+    vocab.build_vocab(config.caption_file, config.vocab_size)
+    vocab.save_vocab(config.vocab_file)
