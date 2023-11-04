@@ -14,7 +14,7 @@ config = Config
 torch.manual_seed(config.seed)
 torch.cuda.manual_seed(config.seed)
 
-# build vocabulary
+# load vocabulary
 vocab = Vocab()
 vocab.load_vocab(config.vocab_file)
 
@@ -50,7 +50,7 @@ print('---Training---')
 
 for epoch in range(config.epoch):
 
-    print('# train')
+    print('# train epoch', epoch)
     for i, batch in enumerate(tqdm(train_loader)):
 
         encoder.train()
@@ -76,8 +76,8 @@ for epoch in range(config.epoch):
         # prepare output and target
         output, _ = decoder(decoder_input, hidden, cell)
         # output: (caption_length + 1, batch, vocab_size)
-        output = output[:-1, :, :].view(-1, config.vocab_size)
-        targets = caption_batch.permute(1, 0).reshape(-1)
+        output = output[1:-1, :, :].view(-1, config.vocab_size)
+        targets = caption_batch.permute(1, 0).reshape(-1)[1:]
         mask = targets != vocab.word2index[vocab.pad]
         # only compare non-pad tokens
         output = output[mask, :]
