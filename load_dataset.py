@@ -12,7 +12,7 @@ from vocab import Vocab
 
 def preprocess_image():
     return transforms.Compose([
-        transforms.Resize(256),
+        transforms.Resize((256, 256)),
         transforms.CenterCrop(224),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),

@@ -20,6 +20,8 @@ class Config:
 
     train_size = 0.8
 
+    max_length = 32
+
     dataset_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'dataset', 'Flick_30k')
     image_dir = os.path.join(dataset_dir, 'Images')
     caption_file = os.path.join(dataset_dir, 'captions.txt')
