@@ -130,7 +130,7 @@ for epoch in range(config.epoch):
             acc_batch = (probs.max(dim=-1)[1] == targets).float().mean()
             acc.append(acc_batch.item())
 
-        print('Accuracy: ', sum(acc) / len(acc))
+    print('Accuracy: ', sum(acc) / len(acc))
 
     torch.save(encoder.state_dict(), config.encoder_file)
     torch.save(emb_layer.state_dict(), config.embedding_file)
