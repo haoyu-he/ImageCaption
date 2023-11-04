@@ -9,6 +9,7 @@ class Config:
     seed = 2024
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+    image_emb_dim = 512
     vocab_size = 7500
     word_emb_dim = 512
     hidden_dim = 1024

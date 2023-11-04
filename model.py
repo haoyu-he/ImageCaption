@@ -39,21 +39,23 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
 
     def __init__(self,
-                 input_dim: int,
+                 image_emb_dim: int,
+                 word_emb_dim: int,
                  hidden_dim: int,
                  num_layers: int,
                  vocab_size: int):
         super().__init__()
 
-        self.input_dim = input_dim
+        self.image_emb_dim = image_emb_dim
+        self.word_emb_dim = word_emb_dim
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.vocab_size = vocab_size
 
-        self.hidden_0 = nn.Parameter(torch.zeros(self.num_layers, 1, self.hidden_dim))
-        self.cell_0 = nn.Parameter(torch.zeros(self.num_layers, 1, self.hidden_dim))
+        self.hidden_0 = nn.Parameter(torch.zeros(self.num_layers, 1, self.hidden_dim, requires_grad=True))
+        self.cell_0 = nn.Parameter(torch.zeros(self.num_layers, 1, self.hidden_dim, requires_grad=True))
 
-        self.decoder = nn.LSTM(input_size=self.input_dim,
+        self.decoder = nn.LSTM(input_size=self.image_emb_dim + self.word_emb_dim,
                                hidden_size=self.hidden_dim,
                                num_layers=self.num_layers)
 
