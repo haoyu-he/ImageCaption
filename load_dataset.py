@@ -1,8 +1,9 @@
 import os
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+from torch.nn.utils.rnn import pad_sequence
 
 from PIL import Image
 
@@ -19,7 +20,7 @@ def preprocess_image():
     ])
 
 
-class Flicker30k:
+class Flicker30k(Dataset):
 
     def __init__(self,
                  image_folder: str,
@@ -66,3 +67,20 @@ class Flicker30k:
 
         return image, sample['words_ids']
 
+
+class Padding:
+
+    def __init__(self, pad_index: int, batch_first: bool = True):
+        self.pad_index = pad_index
+        self.batch_first = batch_first
+
+    def __call__(self, batch):
+        images = [item[0].unsqueeze(0) for item in batch]
+        images = torch.cat(images, dim=0)
+        # images: (batch, 3, 224, 224)
+
+        captions = [item[1] for item in batch]
+        captions = pad_sequence(captions, batch_first=self.batch_first, padding_value=self.pad_index)
+        # captions: (batch, length)
+
+        return images, captions
