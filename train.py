@@ -35,7 +35,7 @@ print('---Initializing model---')
 encoder = Encoder(image_emb_dim=config.word_emb_dim).to(config.device)
 emb_layer = torch.nn.Embedding(num_embeddings=config.vocab_size,
                                embedding_dim=config.word_emb_dim,
-                               padding_idx=vocab.word2index[vocab.pad])
+                               padding_idx=vocab.word2index[vocab.pad]).to(config.device)
 decoder = Decoder(input_dim=config.word_emb_dim,
                   hidden_dim=config.hidden_dim,
                   num_layers=config.num_layers,
