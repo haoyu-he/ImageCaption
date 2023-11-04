@@ -19,10 +19,10 @@ class Encoder(nn.Module):
 
         # remove the last layer
         modules = list(encoder.children())[:-1]
-        self.encoder = nn.Sequential(*modules).to(self.device)
+        self.encoder = nn.Sequential(*modules)
 
         # final layer
-        self.fc = nn.Linear(encoder.fc.in_features, self.image_emb_dim, device=self.device)
+        self.fc = nn.Linear(encoder.fc.in_features, self.image_emb_dim)
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
 
@@ -39,20 +39,21 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
 
     def __init__(self,
-                 image_emb_dim: int,
-                 word_emb_dim: int,
+                 input_dim: int,
                  hidden_dim: int,
                  num_layers: int,
                  vocab_size: int):
         super().__init__()
 
-        self.image_emb_dim = image_emb_dim
-        self.word_emb_dim = word_emb_dim
+        self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.vocab_size = vocab_size
 
-        self.decoder = nn.LSTM(input_size=self.image_emb_dim + self.word_emb_dim,
+        self.hidden_0 = nn.Parameter(torch.zeros(self.num_layers, 1, self.hidden_dim))
+        self.cell_0 = nn.Parameter(torch.zeros(self.num_layers, 1, self.hidden_dim))
+
+        self.decoder = nn.LSTM(input_size=self.input_dim,
                                hidden_size=self.hidden_dim,
                                num_layers=self.num_layers)
 
@@ -62,12 +63,9 @@ class Decoder(nn.Module):
         )
 
     def forward(self,
-                embedded_captions: torch.Tensor,
-                encoder_emb: torch.Tensor,
+                decoder_input: torch.Tensor,
                 hidden: torch.Tensor,
                 cell: torch.Tensor) -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-
-        decoder_input = torch.cat((embedded_captions, encoder_emb), dim=2)
 
         decoder_output, (hidden, cell) = self.decoder(decoder_input, (hidden, cell))
         # decoder_output: (length, batch, hidden_dim)
