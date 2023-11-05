@@ -49,6 +49,10 @@ encoder.load_state_dict(torch.load(config.encoder_file, map_location=config.devi
 emb_layer.load_state_dict(torch.load(config.embedding_file, map_location=config.device))
 decoder.load_state_dict(torch.load(config.decoder_file, map_location=config.device))
 
+encoder.eval()
+emb_layer.eval()
+decoder.eval()
+
 '''generate sentence'''
 image_norm = image_norm.unsqueeze(0)
 # image_norm: (1, 3, 224, 224)
