@@ -1,14 +1,14 @@
 import os
 import argparse
 from PIL import Image
+import matplotlib.pyplot as plt
 
 import torch
 from torchvision import transforms
 
 from config import Config
 from vocab import Vocab
-from load_dataset import Flicker30k, preprocess_image, Padding
-from model import Encoder, Decoder
+from model import ImageEncoder, TextDecoder
 
 
 parser = argparse.ArgumentParser()
@@ -35,14 +35,14 @@ image_ori = transform(image).to(config.device)
 image_norm = normalize(image_ori)
 
 # load model
-encoder = Encoder(image_emb_dim=config.word_emb_dim).to(config.device)
+encoder = ImageEncoder(word_emb_dim=config.word_emb_dim).to(config.device)
 emb_layer = torch.nn.Embedding(num_embeddings=config.vocab_size,
                                embedding_dim=config.word_emb_dim,
                                padding_idx=vocab.word2index[vocab.pad]).to(config.device)
-decoder = Decoder(word_emb_dim=config.word_emb_dim,
-                  hidden_dim=config.hidden_dim,
-                  num_layers=config.num_layers,
-                  vocab_size=config.vocab_size).to(config.device)
+decoder = TextDecoder(word_emb_dim=config.word_emb_dim,
+                      hidden_dim=config.decoder_hidden_dim,
+                      num_layers=config.num_decoder_layers,
+                      vocab_size=config.vocab_size).to(config.device)
 
 encoder.load_state_dict(torch.load(config.encoder_file, map_location=config.device))
 emb_layer.load_state_dict(torch.load(config.embedding_file, map_location=config.device))
@@ -84,5 +84,11 @@ for i in range(config.max_length):
         break
 
     sentence.append(next_word)
+
+sentence = ' '.join(sentence).capitalize().strip()
+image_id = args.image_file.split('.')[0]
+plt.imshow(image_ori.cpu())
+plt.title(sentence)
+plt.savefig(image_id + '.pdf', bbox_inches='tight')
 
 print(sentence)

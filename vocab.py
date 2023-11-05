@@ -1,5 +1,3 @@
-import os
-import string
 from nltk.tokenize import RegexpTokenizer
 from collections import Counter
 

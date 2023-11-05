@@ -1,5 +1,3 @@
-import os
-
 import torch
 from torch.utils.data import random_split, DataLoader
 
@@ -8,7 +6,7 @@ from tqdm import tqdm
 from config import Config
 from vocab import Vocab
 from load_dataset import Flicker30k, preprocess_image, Padding
-from model import Encoder, Decoder
+from model import ImageEncoder, TextDecoder
 
 config = Config
 torch.manual_seed(config.seed)
@@ -32,14 +30,17 @@ val_loader = DataLoader(dataset=val_dataset, batch_size=config.batch, shuffle=Fa
 # create model
 print('---Initializing model---')
 
-encoder = Encoder(image_emb_dim=config.word_emb_dim).to(config.device)
+encoder = ImageEncoder(word_emb_dim=config.word_emb_dim,
+                       encoder_feedforward_dim=config.encoder_feedforward_dim,
+                       encoder_nheads=config.encoder_nheads,
+                       num_encoder_layer=config.num_encoder_layer).to(config.device)
 emb_layer = torch.nn.Embedding(num_embeddings=config.vocab_size,
                                embedding_dim=config.word_emb_dim,
                                padding_idx=vocab.word2index[vocab.pad]).to(config.device)
-decoder = Decoder(word_emb_dim=config.word_emb_dim,
-                  hidden_dim=config.hidden_dim,
-                  num_layers=config.num_layers,
-                  vocab_size=config.vocab_size).to(config.device)
+decoder = TextDecoder(word_emb_dim=config.word_emb_dim,
+                      hidden_dim=config.decoder_hidden_dim,
+                      num_layers=config.num_decoder_layers,
+                      vocab_size=config.vocab_size).to(config.device)
 
 criterion = torch.nn.CrossEntropyLoss().to(config.device)
 parameters = list(encoder.parameters()) + list(emb_layer.parameters()) + list(decoder.parameters())
@@ -129,6 +130,8 @@ for epoch in range(config.epoch):
             probs = torch.exp(output)
             acc_batch = (probs.max(dim=-1)[1] == targets).float().mean()
             acc.append(acc_batch.item())
+
+    torch.cuda.empty_cache()
 
     print('Accuracy: ', sum(acc) / len(acc))
 

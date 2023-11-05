@@ -5,12 +5,19 @@ import torchvision.models as models
 from typing import Tuple
 
 
-class Encoder(nn.Module):
+class ImageEncoder(nn.Module):
 
-    def __init__(self, image_emb_dim: int):
+    def __init__(self,
+                 word_emb_dim: int,
+                 encoder_feedforward_dim: int,
+                 encoder_nheads: int,
+                 num_encoder_layer: int):
         super().__init__()
 
-        self.image_emb_dim = image_emb_dim
+        self.image_emb_dim = word_emb_dim
+        self.encoder_feedforward_dim = encoder_feedforward_dim
+        self.encoder_nheads = encoder_nheads
+        self.num_encoder_layer = num_encoder_layer
 
         # freeze encoder parameters
         encoder = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
@@ -20,6 +27,14 @@ class Encoder(nn.Module):
         # remove the last layer
         modules = list(encoder.children())[:-1]
         self.encoder = nn.Sequential(*modules)
+
+        # transformer mapping
+        transformer_encoder_layer = nn.TransformerEncoderLayer(
+            d_model=encoder.fc.in_features,
+            nhead=self.encoder_nheads,
+            dim_feedforward=self.encoder_feedforward_dim
+        )
+        self.transformer_encoder = nn.TransformerEncoder(transformer_encoder_layer, self.num_encoder_layer)
 
         # final layer
         self.fc = nn.Linear(encoder.fc.in_features, self.image_emb_dim)
@@ -36,7 +51,7 @@ class Encoder(nn.Module):
         return h
 
 
-class Decoder(nn.Module):
+class TextDecoder(nn.Module):
 
     def __init__(self,
                  word_emb_dim: int,
