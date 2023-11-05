@@ -32,12 +32,11 @@ val_loader = DataLoader(dataset=val_dataset, batch_size=config.batch, shuffle=Fa
 # create model
 print('---Initializing model---')
 
-encoder = Encoder(image_emb_dim=config.image_emb_dim).to(config.device)
+encoder = Encoder(image_emb_dim=config.word_emb_dim).to(config.device)
 emb_layer = torch.nn.Embedding(num_embeddings=config.vocab_size,
                                embedding_dim=config.word_emb_dim,
                                padding_idx=vocab.word2index[vocab.pad]).to(config.device)
-decoder = Decoder(image_emb_dim=config.image_emb_dim,
-                  word_emb_dim=config.word_emb_dim,
+decoder = Decoder(word_emb_dim=config.word_emb_dim,
                   hidden_dim=config.hidden_dim,
                   num_layers=config.num_layers,
                   vocab_size=config.vocab_size).to(config.device)
@@ -68,8 +67,7 @@ for epoch in range(config.epoch):
         # prepare decoder input
         image_emb = encoder(image_batch).unsqueeze(0)
         # image_emb: (1, batch, word_emb_dim)
-        image_seq = image_emb.repeat(seq_length, 1, 1)
-        decoder_input = torch.cat([image_seq, caption_emb], dim=2)
+        decoder_input = torch.cat([image_emb, caption_emb], dim=0)
 
         hidden = decoder.hidden_0.repeat(1, batch_size, 1)
         cell = decoder.cell_0.repeat(1, batch_size, 1)
@@ -78,7 +76,7 @@ for epoch in range(config.epoch):
         # prepare output and target
         output, _ = decoder(decoder_input, hidden, cell)
         # output: (caption_length + 1, batch, vocab_size)
-        output = output[:-1, :, :].view(-1, config.vocab_size)
+        output = output[1:-1, :, :].view(-1, config.vocab_size)
         targets = caption_batch.permute(1, 0)[1:, :].reshape(-1)
         mask = targets != vocab.word2index[vocab.pad]
         # only compare non-pad tokens
@@ -112,8 +110,7 @@ for epoch in range(config.epoch):
             # prepare decoder input
             image_emb = encoder(image_batch).unsqueeze(0)
             # image_emb: (1, batch, word_emb_dim)
-            image_seq = image_emb.repeat(seq_length, 1, 1)
-            decoder_input = torch.cat([image_seq, caption_emb], dim=2)
+            decoder_input = torch.cat([image_emb, caption_emb], dim=0)
 
             hidden = decoder.hidden_0.repeat(1, batch_size, 1)
             cell = decoder.cell_0.repeat(1, batch_size, 1)
@@ -122,7 +119,7 @@ for epoch in range(config.epoch):
             # prepare output and target
             output, _ = decoder(decoder_input, hidden, cell)
             # output: (caption_length + 1, batch, vocab_size)
-            output = output[:-1, :, :].view(-1, config.vocab_size)
+            output = output[1:-1, :, :].view(-1, config.vocab_size)
             targets = caption_batch.permute(1, 0)[1:, :].reshape(-1)
             mask = targets != vocab.word2index[vocab.pad]
             # only compare non-pad tokens

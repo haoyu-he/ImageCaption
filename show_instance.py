@@ -72,8 +72,7 @@ for i in range(config.max_length):
     word_seq = emb_layer(word_indices).permute(1, 0, 2)
     # word_seq: (sequence_length, batch, word_emb_dim)
 
-    image_seq = image_emb.repeat(i + 1, 1, 1)
-    decoder_input = torch.cat([image_seq, word_seq], dim=2)
+    decoder_input = torch.cat([image_emb, word_seq], dim=0)
 
     next_pred, (hidden, cell) = decoder(decoder_input, hidden, cell)
     # next_pred: (caption_length, batch, vocab_size)
