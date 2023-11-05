@@ -35,12 +35,11 @@ image_ori = transform(image).to(config.device)
 image_norm = normalize(image_ori)
 
 # load model
-encoder = Encoder(image_emb_dim=config.image_emb_dim).to(config.device)
+encoder = Encoder(image_emb_dim=config.word_emb_dim).to(config.device)
 emb_layer = torch.nn.Embedding(num_embeddings=config.vocab_size,
                                embedding_dim=config.word_emb_dim,
                                padding_idx=vocab.word2index[vocab.pad]).to(config.device)
-decoder = Decoder(image_emb_dim=config.image_emb_dim,
-                  word_emb_dim=config.word_emb_dim,
+decoder = Decoder(word_emb_dim=config.word_emb_dim,
                   hidden_dim=config.hidden_dim,
                   num_layers=config.num_layers,
                   vocab_size=config.vocab_size).to(config.device)
@@ -72,8 +71,7 @@ for i in range(config.max_length):
     word_seq = emb_layer(word_indices).permute(1, 0, 2)
     # word_seq: (sequence_length, batch, word_emb_dim)
 
-    image_seq = image_emb.repeat(i + 1, 1, 1)
-    decoder_input = torch.cat([image_seq, word_seq], dim=2)
+    decoder_input = torch.cat([image_emb, word_seq], dim=0)
 
     next_pred, (hidden, cell) = decoder(decoder_input, hidden, cell)
     # next_pred: (caption_length, batch, vocab_size)
