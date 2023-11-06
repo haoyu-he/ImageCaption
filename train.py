@@ -55,7 +55,7 @@ else:
 
 criterion = torch.nn.CrossEntropyLoss().to(config.device)
 parameters = list(encoder.parameters()) + list(emb_layer.parameters()) + list(decoder.parameters())
-optimizer = torch.optim.Adam(params=parameters, lr=config.lr)
+optimizer = torch.optim.Adam(params=parameters, lr=config.lr_lstm if  args.model == 'lstm' else config.lr_transformer)
 
 # training
 print('---Training---')

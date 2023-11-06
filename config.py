@@ -18,7 +18,8 @@ class Config:
 
     batch = 32
     epoch = 5
-    lr = 3e-3
+    lr_lstm = 2e-3
+    lr_transformer = 2e-4
 
     train_size = 0.8
 
