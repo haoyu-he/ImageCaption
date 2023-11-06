@@ -136,7 +136,7 @@ class DecoderTransformer(nn.Module):
 
         tgt = self.pe(tgt)
 
-        mask = nn.Transformer.generate_square_subsequent_mask(tgt.shape[0])
+        mask = nn.Transformer.generate_square_subsequent_mask(tgt.shape[0]).to(tgt.device)
 
         decoder_output = self.decoder(tgt, memory, tgt_mask=mask)
         decoder_output = self.fc(decoder_output)
