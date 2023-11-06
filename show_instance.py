@@ -69,8 +69,9 @@ decoder.eval()
 image_norm = image_norm.unsqueeze(0)
 # image_norm: (1, 3, 224, 224)
 
-hidden = decoder.hidden_0
-cell = decoder.cell_0
+if args.model == 'lstm':
+    hidden = decoder.hidden_0
+    cell = decoder.cell_0
 
 sentence = []
 word_indices = torch.tensor([vocab.word2index[vocab.sos]], dtype=torch.long, device=config.device).unsqueeze(0)
@@ -79,7 +80,7 @@ word_indices = torch.tensor([vocab.word2index[vocab.sos]], dtype=torch.long, dev
 image_emb = encoder(image_norm).unsqueeze(0)
 # image_emb: (1, batch: 1, word_emb_dim)
 
-for i in range(config.max_length):
+for i in range(config.max_length - 1):
 
     word_seq = emb_layer(word_indices).permute(1, 0, 2)
     # word_seq: (sequence_length, batch: 1, word_emb_dim)
@@ -102,7 +103,7 @@ for i in range(config.max_length):
 
     sentence.append(next_word)
 
-sentence = ' '.join(sentence).strip().capitalize()
+sentence = ' '.join(sentence).strip().capitalize() + '.'
 plt.imshow(image_ori.permute(1, 2, 0).cpu())
 plt.title(sentence)
 plt.axis('off')
