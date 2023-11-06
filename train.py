@@ -1,3 +1,4 @@
+import os
 import argparse
 
 import torch
@@ -58,6 +59,9 @@ optimizer = torch.optim.Adam(params=parameters, lr=config.lr)
 
 # training
 print('---Training---')
+
+if not os.path.exists('./src'):
+    os.mkdir('./src')
 
 for epoch in range(config.epoch):
 
