@@ -84,10 +84,8 @@ for epoch in range(config.epoch):
         # image_emb: (1, batch, word_emb_dim)
 
         # feed decoder
+        decoder_input = torch.cat([image_emb, caption_emb], dim=0)
         if args.model == 'lstm':
-
-            decoder_input = torch.cat([image_emb, caption_emb], dim=0)
-
             hidden = decoder.hidden_0.repeat(1, batch_size, 1)
             cell = decoder.cell_0.repeat(1, batch_size, 1)
             # (num_layers, batch, hidden_dim)
@@ -95,11 +93,10 @@ for epoch in range(config.epoch):
             # prepare output and target
             output, _ = decoder(decoder_input, hidden, cell)
             # output: (caption_length + 1, batch, vocab_size)
-            output = output[1:-1, :, :].view(-1, config.vocab_size)
         else:
-            output = decoder(tgt=caption_emb, memory=image_emb)
-            # output: (caption_length, batch, vocab_size)
-            output = output[:-1, :, :].view(-1, config.vocab_size)
+            output = decoder(decoder_input)
+            # output: (caption_length + 1, batch, vocab_size)
+        output = output[1:-1, :, :].view(-1, config.vocab_size)
 
         targets = caption_batch.permute(1, 0)[1:, :].reshape(-1)
         mask = targets != vocab.word2index[vocab.pad]
@@ -136,10 +133,8 @@ for epoch in range(config.epoch):
             # image_emb: (1, batch, word_emb_dim)
 
             # feed decoder
+            decoder_input = torch.cat([image_emb, caption_emb], dim=0)
             if args.model == 'lstm':
-
-                decoder_input = torch.cat([image_emb, caption_emb], dim=0)
-
                 hidden = decoder.hidden_0.repeat(1, batch_size, 1)
                 cell = decoder.cell_0.repeat(1, batch_size, 1)
                 # (num_layers, batch, hidden_dim)
@@ -147,11 +142,10 @@ for epoch in range(config.epoch):
                 # prepare output and target
                 output, _ = decoder(decoder_input, hidden, cell)
                 # output: (caption_length + 1, batch, vocab_size)
-                output = output[1:-1, :, :].view(-1, config.vocab_size)
             else:
-                output = decoder(tgt=caption_emb, memory=image_emb)
-                # output: (caption_length, batch, vocab_size)
-                output = output[:-1, :, :].view(-1, config.vocab_size)
+                output = decoder(decoder_input)
+                # output: (caption_length + 1, batch, vocab_size)
+            output = output[1:-1, :, :].view(-1, config.vocab_size)
 
             targets = caption_batch.permute(1, 0)[1:, :].reshape(-1)
             mask = targets != vocab.word2index[vocab.pad]

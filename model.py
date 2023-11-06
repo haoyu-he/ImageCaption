@@ -118,27 +118,25 @@ class DecoderTransformer(nn.Module):
 
         self.pe = PositionalEncoding(self.word_emb_dim)
 
-        decoder_layer = nn.TransformerDecoderLayer(
+        decoder_layer = nn.TransformerEncoderLayer(
             d_model=self.word_emb_dim,
             nhead=self.nhead,
             dim_feedforward=self.hidden_dim
         )
-        self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=self.num_layers)
+        self.decoder = nn.TransformerEncoder(decoder_layer, num_layers=self.num_layers)
 
         self.fc = nn.Sequential(
             nn.Linear(self.word_emb_dim, self.vocab_size),
             nn.LogSoftmax(dim=2)
         )
 
-    def forward(self,
-                tgt: torch.Tensor,
-                memory: torch.Tensor):
+    def forward(self, decoder_input: torch.Tensor):
 
-        tgt = self.pe(tgt)
+        src = self.pe(decoder_input)
 
-        mask = nn.Transformer.generate_square_subsequent_mask(tgt.shape[0], device=tgt.device)
+        mask = nn.Transformer.generate_square_subsequent_mask(src.shape[0], device=src.device)
 
-        decoder_output = self.decoder(tgt, memory, tgt_mask=mask)
+        decoder_output = self.decoder(src, mask=mask)
         decoder_output = self.fc(decoder_output)
         # decoder_output: (length, batch, vocab_size)
 

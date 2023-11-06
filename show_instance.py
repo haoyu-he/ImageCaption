@@ -84,14 +84,14 @@ for i in range(config.max_length):
     word_seq = emb_layer(word_indices).permute(1, 0, 2)
     # word_seq: (sequence_length, batch: 1, word_emb_dim)
 
+    decoder_input = torch.cat([image_emb, word_seq], dim=0)
     if args.model == 'lstm':
-        decoder_input = torch.cat([image_emb, word_seq], dim=0)
 
         next_pred, (hidden, cell) = decoder(decoder_input, hidden, cell)
         # next_pred: (caption_length + 1, batch: 1, vocab_size)
     else:
-        next_pred = decoder(tgt=word_seq, memory=image_emb)
-        # next_pred: (caption_length, batch, vocab_size)
+        next_pred = decoder(decoder_input)
+        # next_pred: (caption_length + 1, batch, vocab_size)
     next_pred = torch.argmax(next_pred[-1, 0, :])
 
     word_indices = torch.cat([word_indices, next_pred.view(1, 1)], dim=-1)
