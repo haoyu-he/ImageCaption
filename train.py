@@ -1,4 +1,4 @@
-import os
+import argparse
 
 import torch
 from torch.utils.data import random_split, DataLoader
@@ -8,7 +8,11 @@ from tqdm import tqdm
 from config import Config
 from vocab import Vocab
 from load_dataset import Flicker30k, preprocess_image, Padding
-from model import Encoder, Decoder
+from model import Encoder, DecoderLSTM, DecoderTransformer
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', type=str, default='lstm', choices=['lstm', 'transformer'])
+args = parser.parse_args()
 
 config = Config
 torch.manual_seed(config.seed)
@@ -32,14 +36,21 @@ val_loader = DataLoader(dataset=val_dataset, batch_size=config.batch, shuffle=Fa
 # create model
 print('---Initializing model---')
 
-encoder = Encoder(image_emb_dim=config.word_emb_dim).to(config.device)
+encoder = Encoder(word_emb_dim=config.word_emb_dim).to(config.device)
 emb_layer = torch.nn.Embedding(num_embeddings=config.vocab_size,
                                embedding_dim=config.word_emb_dim,
                                padding_idx=vocab.word2index[vocab.pad]).to(config.device)
-decoder = Decoder(word_emb_dim=config.word_emb_dim,
-                  hidden_dim=config.hidden_dim,
-                  num_layers=config.num_layers,
-                  vocab_size=config.vocab_size).to(config.device)
+if args.model == 'lstm':
+    decoder = DecoderLSTM(word_emb_dim=config.word_emb_dim,
+                          hidden_dim=config.hidden_dim,
+                          num_layers=config.num_lstm_layers,
+                          vocab_size=config.vocab_size).to(config.device)
+else:
+    decoder = DecoderTransformer(word_emb_dim=config.word_emb_dim,
+                                 nhead=config.n_head,
+                                 hidden_dim=config.hidden_dim,
+                                 num_layers=config.num_transformer_layers,
+                                 vocab_size=config.vocab_size).to(config.device)
 
 criterion = torch.nn.CrossEntropyLoss().to(config.device)
 parameters = list(encoder.parameters()) + list(emb_layer.parameters()) + list(decoder.parameters())
@@ -64,19 +75,28 @@ for epoch in range(config.epoch):
         seq_length = caption_emb.shape[0]
         batch_size = caption_emb.shape[1]
 
-        # prepare decoder input
+        # get image embedding
         image_emb = encoder(image_batch).unsqueeze(0)
         # image_emb: (1, batch, word_emb_dim)
-        decoder_input = torch.cat([image_emb, caption_emb], dim=0)
 
-        hidden = decoder.hidden_0.repeat(1, batch_size, 1)
-        cell = decoder.cell_0.repeat(1, batch_size, 1)
-        # (num_layers, batch, hidden_dim)
+        # feed decoder
+        if args.model == 'lstm':
 
-        # prepare output and target
-        output, _ = decoder(decoder_input, hidden, cell)
-        # output: (caption_length + 1, batch, vocab_size)
-        output = output[1:-1, :, :].view(-1, config.vocab_size)
+            decoder_input = torch.cat([image_emb, caption_emb], dim=0)
+
+            hidden = decoder.hidden_0.repeat(1, batch_size, 1)
+            cell = decoder.cell_0.repeat(1, batch_size, 1)
+            # (num_layers, batch, hidden_dim)
+
+            # prepare output and target
+            output, _ = decoder(decoder_input, hidden, cell)
+            # output: (caption_length + 1, batch, vocab_size)
+            output = output[1:-1, :, :].view(-1, config.vocab_size)
+        else:
+            output = decoder(tgt=caption_emb, memory=image_emb)
+            # output: (caption_length, batch, vocab_size)
+            output = output[:-1, :, :].view(-1, config.vocab_size)
+
         targets = caption_batch.permute(1, 0)[1:, :].reshape(-1)
         mask = targets != vocab.word2index[vocab.pad]
         # only compare non-pad tokens
@@ -107,19 +127,28 @@ for epoch in range(config.epoch):
             seq_length = caption_emb.shape[0]
             batch_size = caption_emb.shape[1]
 
-            # prepare decoder input
+            # get image embedding
             image_emb = encoder(image_batch).unsqueeze(0)
             # image_emb: (1, batch, word_emb_dim)
-            decoder_input = torch.cat([image_emb, caption_emb], dim=0)
 
-            hidden = decoder.hidden_0.repeat(1, batch_size, 1)
-            cell = decoder.cell_0.repeat(1, batch_size, 1)
-            # (num_layers, batch, hidden_dim)
+            # feed decoder
+            if args.model == 'lstm':
 
-            # prepare output and target
-            output, _ = decoder(decoder_input, hidden, cell)
-            # output: (caption_length + 1, batch, vocab_size)
-            output = output[1:-1, :, :].view(-1, config.vocab_size)
+                decoder_input = torch.cat([image_emb, caption_emb], dim=0)
+
+                hidden = decoder.hidden_0.repeat(1, batch_size, 1)
+                cell = decoder.cell_0.repeat(1, batch_size, 1)
+                # (num_layers, batch, hidden_dim)
+
+                # prepare output and target
+                output, _ = decoder(decoder_input, hidden, cell)
+                # output: (caption_length + 1, batch, vocab_size)
+                output = output[1:-1, :, :].view(-1, config.vocab_size)
+            else:
+                output = decoder(tgt=caption_emb, memory=image_emb)
+                # output: (caption_length, batch, vocab_size)
+                output = output[:-1, :, :].view(-1, config.vocab_size)
+
             targets = caption_batch.permute(1, 0)[1:, :].reshape(-1)
             mask = targets != vocab.word2index[vocab.pad]
             # only compare non-pad tokens
@@ -132,6 +161,11 @@ for epoch in range(config.epoch):
 
     print('Accuracy: ', sum(acc) / len(acc))
 
-    torch.save(encoder.state_dict(), config.encoder_file)
-    torch.save(emb_layer.state_dict(), config.embedding_file)
-    torch.save(decoder.state_dict(), config.decoder_file)
+    if args.model == 'lstm':
+        torch.save(encoder.state_dict(), config.encoder_lstm_file)
+        torch.save(emb_layer.state_dict(), config.embedding_lstm_file)
+        torch.save(decoder.state_dict(), config.decoder_lstm_file)
+    else:
+        torch.save(encoder.state_dict(), config.encoder_transformer_file)
+        torch.save(emb_layer.state_dict(), config.embedding_transformer_file)
+        torch.save(decoder.state_dict(), config.decoder_transformer_file)

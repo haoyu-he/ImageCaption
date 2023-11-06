@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -7,10 +9,10 @@ from typing import Tuple
 
 class Encoder(nn.Module):
 
-    def __init__(self, image_emb_dim: int):
+    def __init__(self, word_emb_dim: int):
         super().__init__()
 
-        self.image_emb_dim = image_emb_dim
+        self.word_emb_dim = word_emb_dim
 
         # freeze encoder parameters
         encoder = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
@@ -22,7 +24,7 @@ class Encoder(nn.Module):
         self.encoder = nn.Sequential(*modules)
 
         # final layer
-        self.fc = nn.Linear(encoder.fc.in_features, self.image_emb_dim)
+        self.fc = nn.Linear(encoder.fc.in_features, self.word_emb_dim)
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
 
@@ -36,7 +38,7 @@ class Encoder(nn.Module):
         return h
 
 
-class Decoder(nn.Module):
+class DecoderLSTM(nn.Module):
 
     def __init__(self,
                  word_emb_dim: int,
@@ -74,3 +76,70 @@ class Decoder(nn.Module):
         # decoder_output: (length, batch, vocab_size)
 
         return decoder_output, (hidden, cell)
+
+
+class PositionalEncoding(nn.Module):
+
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 128):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        position = torch.arange(max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        pe = torch.zeros(max_len, 1, d_model)
+        pe[:, 0, 0::2] = torch.sin(position * div_term)
+        pe[:, 0, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Arguments:
+            x: Tensor, shape ``[seq_len, batch_size, embedding_dim]``
+        """
+        x = x + self.pe[:x.size(0)]
+        return self.dropout(x)
+
+
+class DecoderTransformer(nn.Module):
+
+    def __init__(self,
+                 word_emb_dim: int,
+                 nhead: int,
+                 hidden_dim: int,
+                 num_layers: int,
+                 vocab_size: int):
+        super().__init__()
+
+        self.word_emb_dim = word_emb_dim
+        self.nhead = nhead
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.vocab_size = vocab_size
+
+        self.pe = PositionalEncoding(self.word_emb_dim)
+
+        decoder_layer = nn.TransformerDecoderLayer(
+            d_model=self.word_emb_dim,
+            nhead=self.nhead,
+            dim_feedforward=self.hidden_dim
+        )
+        self.decoder = nn.TransformerDecoder(decoder_layer, num_layers=self.num_layers)
+
+        self.fc = nn.Sequential(
+            nn.Linear(self.word_emb_dim, self.vocab_size),
+            nn.LogSoftmax(dim=2)
+        )
+
+    def forward(self,
+                tgt: torch.Tensor,
+                memory: torch.Tensor):
+
+        tgt = self.pe(tgt)
+
+        mask = nn.Transformer.generate_square_subsequent_mask(tgt.shape[0])
+
+        decoder_output = self.decoder(tgt, memory, tgt_mask=mask, tgt_is_causal=True)
+        decoder_output = self.fc(decoder_output)
+        # decoder_output: (length, batch, vocab_size)
+
+        return decoder_output
