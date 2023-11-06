@@ -138,7 +138,7 @@ class DecoderTransformer(nn.Module):
 
         mask = nn.Transformer.generate_square_subsequent_mask(tgt.shape[0])
 
-        decoder_output = self.decoder(tgt, memory, tgt_mask=mask, tgt_is_causal=True)
+        decoder_output = self.decoder(tgt, memory, tgt_mask=mask)
         decoder_output = self.fc(decoder_output)
         # decoder_output: (length, batch, vocab_size)
 
