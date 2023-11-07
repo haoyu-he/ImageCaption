@@ -9,10 +9,10 @@ from tqdm import tqdm
 from config import Config
 from vocab import Vocab
 from load_dataset import Flicker30k, preprocess_image, Padding
-from model import Encoder, DecoderLSTM, DecoderTransformer
+from model import Encoder, DecoderLSTM, DecoderGPT1
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default='lstm', choices=['lstm', 'transformer'])
+parser.add_argument('--model', type=str, default='lstm', choices=['lstm', 'gpt1'])
 args = parser.parse_args()
 
 config = Config
@@ -47,15 +47,15 @@ if args.model == 'lstm':
                           num_layers=config.num_lstm_layers,
                           vocab_size=config.vocab_size).to(config.device)
 else:
-    decoder = DecoderTransformer(word_emb_dim=config.word_emb_dim,
-                                 nhead=config.n_head,
-                                 hidden_dim=config.hidden_dim,
-                                 num_layers=config.num_transformer_layers,
-                                 vocab_size=config.vocab_size).to(config.device)
+    decoder = DecoderGPT1(word_emb_dim=config.word_emb_dim,
+                          nhead=config.n_head,
+                          hidden_dim=config.hidden_dim,
+                          num_layers=config.num_gpt1_layers,
+                          vocab_size=config.vocab_size).to(config.device)
 
 criterion = torch.nn.CrossEntropyLoss().to(config.device)
 parameters = list(encoder.parameters()) + list(emb_layer.parameters()) + list(decoder.parameters())
-optimizer = torch.optim.Adam(params=parameters, lr=config.lr_lstm if  args.model == 'lstm' else config.lr_transformer)
+optimizer = torch.optim.Adam(params=parameters, lr=config.lr_lstm if args.model == 'lstm' else config.lr_gpt1)
 
 # training
 print('---Training---')
@@ -164,6 +164,6 @@ for epoch in range(config.epoch):
         torch.save(emb_layer.state_dict(), config.embedding_lstm_file)
         torch.save(decoder.state_dict(), config.decoder_lstm_file)
     else:
-        torch.save(encoder.state_dict(), config.encoder_transformer_file)
-        torch.save(emb_layer.state_dict(), config.embedding_transformer_file)
-        torch.save(decoder.state_dict(), config.decoder_transformer_file)
+        torch.save(encoder.state_dict(), config.encoder_gpt1_file)
+        torch.save(emb_layer.state_dict(), config.embedding_gpt1_file)
+        torch.save(decoder.state_dict(), config.decoder_gpt1_file)

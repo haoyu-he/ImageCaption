@@ -100,7 +100,7 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 
-class DecoderTransformer(nn.Module):
+class DecoderGPT1(nn.Module):
 
     def __init__(self,
                  word_emb_dim: int,

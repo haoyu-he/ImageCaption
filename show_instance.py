@@ -8,11 +8,11 @@ from torchvision import transforms
 
 from config import Config
 from vocab import Vocab
-from model import Encoder, DecoderLSTM, DecoderTransformer
+from model import Encoder, DecoderLSTM, DecoderGPT1
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default='lstm', choices=['lstm', 'transformer'])
+parser.add_argument('--model', type=str, default='lstm', choices=['lstm', 'gpt1'])
 parser.add_argument('--image_file', type=str, default='6261030.jpg')
 args = parser.parse_args()
 
@@ -46,20 +46,20 @@ if args.model == 'lstm':
                           num_layers=config.num_lstm_layers,
                           vocab_size=config.vocab_size).to(config.device)
 else:
-    decoder = DecoderTransformer(word_emb_dim=config.word_emb_dim,
-                                 nhead=config.n_head,
-                                 hidden_dim=config.hidden_dim,
-                                 num_layers=config.num_transformer_layers,
-                                 vocab_size=config.vocab_size).to(config.device)
+    decoder = DecoderGPT1(word_emb_dim=config.word_emb_dim,
+                          nhead=config.n_head,
+                          hidden_dim=config.hidden_dim,
+                          num_layers=config.num_gpt1_layers,
+                          vocab_size=config.vocab_size).to(config.device)
 
 if args.model == 'lstm':
     encoder.load_state_dict(torch.load(config.encoder_lstm_file, map_location=config.device))
     emb_layer.load_state_dict(torch.load(config.embedding_lstm_file, map_location=config.device))
     decoder.load_state_dict(torch.load(config.decoder_lstm_file, map_location=config.device))
 else:
-    encoder.load_state_dict(torch.load(config.encoder_transformer_file, map_location=config.device))
-    emb_layer.load_state_dict(torch.load(config.embedding_transformer_file, map_location=config.device))
-    decoder.load_state_dict(torch.load(config.decoder_transformer_file, map_location=config.device))
+    encoder.load_state_dict(torch.load(config.encoder_gpt1_file, map_location=config.device))
+    emb_layer.load_state_dict(torch.load(config.embedding_gpt1_file, map_location=config.device))
+    decoder.load_state_dict(torch.load(config.decoder_gpt1_file, map_location=config.device))
 
 encoder.eval()
 emb_layer.eval()
@@ -104,9 +104,10 @@ for i in range(config.max_length - 1):
     sentence.append(next_word)
 
 sentence = ' '.join(sentence).strip().capitalize() + '.'
+plt.figure().set_figwidth(50)
 plt.imshow(image_ori.permute(1, 2, 0).cpu())
-plt.title(sentence)
+plt.title('[{}]'.format(args.model) + ' ' + sentence)
 plt.axis('off')
-image_save = args.image_file.split('.')[0] + '_' + args.model + '.pdf'
-plt.savefig(image_save, bbox_inches='tight')
+image_save = args.image_file.split('.')[0] + '_' + args.model + '.png'
+plt.savefig(image_save, dpi=300, bbox_inches='tight')
 print(sentence)

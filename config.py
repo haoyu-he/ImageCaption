@@ -13,13 +13,13 @@ class Config:
     word_emb_dim = 512
     hidden_dim = 1024
     num_lstm_layers = 1
-    num_transformer_layers = 6
+    num_gpt1_layers = 6
     n_head = 8
 
     batch = 32
     epoch = 5
-    lr_lstm = 2e-3
-    lr_transformer = 2e-4
+    lr_lstm = 5e-4
+    lr_gpt1 = 2e-4
 
     train_size = 0.8
 
@@ -53,27 +53,30 @@ class Config:
             '_e' + str(epoch) +
             '_lstm.pt'
     )
-    encoder_transformer_file = (
+    encoder_gpt1_file = (
             'src/encoder' +
             '_b' + str(batch) +
             '_h' + str(hidden_dim) +
-            '_l' + str(num_lstm_layers) +
+            '_l' + str(num_gpt1_layers) +
+            '_nh' + str(n_head) +
             '_e' + str(epoch) +
-            '_transformer.pt'
+            '_gpt1.pt'
     )
-    decoder_transformer_file = (
+    decoder_gpt1_file = (
             'src/decoder' +
             '_b' + str(batch) +
             '_h' + str(hidden_dim) +
-            '_l' + str(num_lstm_layers) +
+            '_l' + str(num_gpt1_layers) +
+            '_nh' + str(n_head) +
             '_e' + str(epoch) +
-            '_transformer.pt'
+            '_gpt1.pt'
     )
-    embedding_transformer_file = (
+    embedding_gpt1_file = (
             'src/embedding' +
             '_b' + str(batch) +
             '_h' + str(hidden_dim) +
-            '_l' + str(num_lstm_layers) +
+            '_l' + str(num_gpt1_layers) +
+            '_nh' + str(n_head) +
             '_e' + str(epoch) +
-            '_transformer.pt'
+            '_gpt1.pt'
     )
