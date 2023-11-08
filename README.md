@@ -70,6 +70,6 @@ More examples can be found in ./examples.
 
 <img src="./examples/229862312_b32_h1024_l1_e10_lstm.png" width="400"/>
 <img src="./examples/229862312_b32_h1024_l6_e10_gpt1.png" width="400"/>
-\
+<br />
 <img src="./examples/2414384480_b32_h1024_l1_e10_lstm.png" width="400"/>
 <img src="./examples/2414384480_b32_h1024_l6_e10_gpt1.png" width="400"/>
