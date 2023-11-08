@@ -67,10 +67,8 @@ Pick the model you want to test and the file from the image directory.
 
 Here are some examples.
 
-![lstm](./examples/229862312_b32_h1024_l1_e10_lstm.png)
-![gpt1](./examples/229862312_b32_h1024_l6_e10_gpt1.png)
+![eg1](./examples/229862312_b32_h1024_l1_e10_lstm.png) ![eg1](./examples/229862312_b32_h1024_l6_e10_gpt1.png)
 
-![lstm](./examples/2414384480_b32_h1024_l1_e10_lstm.png)
-![gpt1](./examples/2414384480_b32_h1024_l6_e10_gpt1.png)
+![eg2](./examples/2414384480_b32_h1024_l1_e10_lstm.png) ![eg2](./examples/2414384480_b32_h1024_l6_e10_gpt1.png)
 
 More examples can be found in ./examples.
