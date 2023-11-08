@@ -97,7 +97,7 @@ class Vocab:
 
 
 if __name__ == '__main__':
-    config = Config
+    config = Config()
 
     vocab = Vocab()
     vocab.build_vocab(config.caption_file, config.vocab_size)

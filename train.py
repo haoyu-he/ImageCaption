@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='lstm', choices=['lstm', 'gpt1'])
 args = parser.parse_args()
 
-config = Config
+config = Config()
 torch.manual_seed(config.seed)
 torch.cuda.manual_seed(config.seed)
 

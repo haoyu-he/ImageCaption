@@ -16,7 +16,7 @@ parser.add_argument('--model', type=str, default='lstm', choices=['lstm', 'gpt1'
 parser.add_argument('--image_file', type=str, default='6261030.jpg')
 args = parser.parse_args()
 
-config = Config
+config = Config()
 
 # load vocabulary
 vocab = Vocab()
@@ -80,6 +80,7 @@ word_indices = torch.tensor([vocab.word2index[vocab.sos]], dtype=torch.long, dev
 image_emb = encoder(image_norm).unsqueeze(0)
 # image_emb: (1, batch: 1, word_emb_dim)
 
+# generate caption
 for i in range(config.max_length - 1):
 
     word_seq = emb_layer(word_indices).permute(1, 0, 2)
@@ -103,11 +104,21 @@ for i in range(config.max_length - 1):
 
     sentence.append(next_word)
 
+# show result
 sentence = ' '.join(sentence).strip().capitalize() + '.'
 plt.figure().set_figwidth(50)
 plt.imshow(image_ori.permute(1, 2, 0).cpu())
 plt.title('[{}]'.format(args.model) + ' ' + sentence)
 plt.axis('off')
-image_save = args.image_file.split('.')[0] + '_' + args.model + '.png'
-plt.savefig(image_save, dpi=300, bbox_inches='tight')
+image_save = (
+        args.image_file.split('.')[0] +
+        '_b' + str(config.batch) +
+        '_h' + str(config.hidden_dim) +
+        '_l' + str(config.num_lstm_layers if args.model == 'lstm' else config.num_gpt1_layers) +
+        '_e' + str(config.epoch) +
+        '_' + args.model + '.png'
+        )
+if not os.path.exists('examples'):
+    os.mkdir('examples')
+plt.savefig(os.path.join('examples', image_save), dpi=300, bbox_inches='tight')
 print(sentence)
