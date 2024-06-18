@@ -12,13 +12,13 @@ I use Flickr30k dataset from [Kaggle](https://www.kaggle.com/datasets/adityajn10
 
 ### Model
 
-I use a pre-trained ResNet-50 as the image encoder, LSTM and stacked GPT-1 blocks as text decoders.
+I use a pre-trained ResNet-50 as the image encoder, LSTM and stacked GPT blocks as text decoders.
 This work mainly falls in the text part. 
 
 I remove the last layer of ResNet-50, then add a linear layer to map the embedding to the same size as the word embedding. 
 The output of the image encoder serves as the first element in the input sequence for the text decoder. 
 
-For GPT-1, I simply use Transformer Encoder with masks to simulate its architecture.
+For GPT, I simply use Transformer Encoder with masks to simulate its architecture.
 
 The models are defined in model.py.
 
