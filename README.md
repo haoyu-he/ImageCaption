@@ -16,7 +16,7 @@ I use a pre-trained ResNet-50 as the image encoder, LSTM and stacked GPT blocks 
 This work mainly falls in the text part. 
 
 I remove the last layer of ResNet-50, then add a linear layer to map the embedding to the same size as the word embedding. 
-The output of the image encoder serves as the first element in the input sequence for the text decoder. 
+The output of the image encoder serves as the first token for the text decoder. 
 
 For GPT, I simply use Transformer Encoder with masks to simulate its architecture.
 
